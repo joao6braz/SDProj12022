@@ -1,10 +1,42 @@
 package Server;
 
-import java.rmi.*;
-import java.sql.Timestamp;
+import java.io.*;
+import java.util.*;
 
-public interface News extends Remote{
-	public String getPublisher() throws RemoteException;
-	public char[] getNews() throws RemoteException;
-	public Timestamp getTimestamp() throws RemoteException;
+public class News  implements Serializable{
+
+	private static final long serialVersionUID = 1L;
+	private String topicName;
+	private String publisherName;
+	private char[] pieceOfNews = new char[180];
+	private Date timestamp;
+	
+	public News(String topicName, String publisherName, char[] pieceOfNews) {
+		super();
+		this.topicName = topicName;
+		this.publisherName = publisherName;
+		this.pieceOfNews = pieceOfNews;
+		this.timestamp = new Date();
+	}
+
+	public String getPublisher() {
+		return this.publisherName;
+	}
+
+	public char[] getPieceOfNews() {
+		return pieceOfNews;
+	}
+
+	public String getTopicName() {
+		return topicName;
+	}
+
+	public Date getTimestamp() {
+		return timestamp;
+	}
+
+	@Override
+	public String toString() {
+		return "Notícias [Última notícia=" + Arrays.toString(pieceOfNews) + "]";
+	}
 }
