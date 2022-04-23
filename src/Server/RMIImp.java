@@ -1,12 +1,14 @@
 package Server;
 
 import java.io.*;
-import java.net.*;
 import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
-import Client.ClientInterface;
 import java.text.*;
+import Client.ClientInterface;
+import Client.PublisherClient;
+
+
 
 public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 	
@@ -14,18 +16,23 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 	
 	private ArrayList<Topic> listOfTopics;
 	private ArrayList<News> listOfNews;
+	private ArrayList<PublisherClient> listOfPublishers; 
 	private File topicsFile;
 	private File newsFile;
-	private ClientInterface client;
+	private File publishersRegistration; 
 	private String clientName;
 	
 	protected RMIImp() throws RemoteException {
 		super();
 		listOfTopics = new ArrayList<Topic>();
 		listOfNews = new ArrayList<News>();
+		listOfPublishers = new ArrayList<PublisherClient>();
 		
 		newsFile = new File ("newsFile.dat");
 		topicsFile = new File ("topicsFile.dat");
+		publishersRegistration = new File ("publishersRegistration.dat");
+		//
+		
 		
 		if(!newsFile.exists()) {
 			try {
@@ -38,31 +45,35 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 				System.out.println(e.getMessage());
 			}
 		} else {
-			try {
-				FileInputStream istream = new FileInputStream(newsFile);
-				ObjectInputStream ois = new ObjectInputStream(istream);
-				
-				while(true) {
-					try {
-						@SuppressWarnings("unchecked")
-						ArrayList<News> readObject = ((ArrayList<News>) ois.readObject());
-						listOfNews = readObject;
-						
-					} catch (EOFException e) {
-						System.out.println("End of News file reached!");
-						break;
-					} catch (IOException | ClassNotFoundException e) {
-						System.out.println("Error reading topic file!");
-						e.printStackTrace();
-						break;
+			if(newsFile.length() == 0) {
+				System.out.println("News file exists and is empty!");
+			} else {
+				try {
+					FileInputStream istream = new FileInputStream(newsFile);
+					ObjectInputStream ois = new ObjectInputStream(istream);
+					
+					while(true) {
+						try {
+							@SuppressWarnings("unchecked")
+							ArrayList<News> readObject = ((ArrayList<News>) ois.readObject());
+							listOfNews = readObject;
+							
+						} catch (EOFException e) {
+							System.out.println("End of News file reached!");
+							break;
+						} catch (IOException | ClassNotFoundException e) {
+							System.out.println("Error reading news file!");
+							e.printStackTrace();
+							break;
+						}
 					}
+					istream.close();
+					ois.close();
+					
+				} catch(IOException e) {
+					System.out.println("Error reading topic file!");
+					e.printStackTrace();
 				}
-				istream.close();
-				ois.close();
-				
-			} catch(IOException e) {
-				System.out.println("Error reading topic file!");
-				e.printStackTrace();
 			}
 		}
 		
@@ -77,32 +88,79 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 				System.out.println(e.getMessage());
 			}
 		} else {
-			try {
-				FileInputStream istream = new FileInputStream(topicsFile);
-				ObjectInputStream ois = new ObjectInputStream(istream);
-				
-				while(true) {
-					try {
-						@SuppressWarnings("unchecked")
-						ArrayList<Topic> readObject = ((ArrayList<Topic>) ois.readObject());
-						listOfTopics = readObject;
-						
-					} catch (EOFException e) {
-						System.out.println("End of topic file reached!");
-						break;
-					} catch (IOException | ClassNotFoundException e) {
-						System.out.println("Error reading topic file!");
-						e.printStackTrace();
-						break;
+			if(topicsFile.length() == 0) {
+				System.out.println("Topics file exists and is empty!");
+			} else {
+				try {
+					FileInputStream istream = new FileInputStream(topicsFile);
+					ObjectInputStream ois = new ObjectInputStream(istream);
+					
+					while(true) {
+						try {
+							@SuppressWarnings("unchecked")
+							ArrayList<Topic> readObject = ((ArrayList<Topic>) ois.readObject());
+							listOfTopics = readObject;
+							
+						} catch (EOFException e) {
+							System.out.println("End of topic file reached!");
+							break;
+						} catch (IOException | ClassNotFoundException e) {
+							System.out.println("Error reading topic file!");
+							e.printStackTrace();
+							break;
+						}
 					}
+					istream.close();
+					ois.close();
+				} catch(IOException e) {
+					System.out.println("Error reading topic file!");
+					e.printStackTrace();
 				}
-				istream.close();
-				ois.close();
-			} catch(IOException e) {
-				System.out.println("Error reading topic file!");
-				e.printStackTrace();
 			}
 		}
+		
+		if(!publishersRegistration.exists()) {
+			try {
+				boolean result3 = publishersRegistration.createNewFile();
+				
+				if (result3) System.out.println("Publishers registration file created!");
+				
+			} catch(IOException e) {
+				System.out.println("Error creating publishers registration file!");
+				System.out.println(e.getMessage());
+			}
+		} else {
+			if(publishersRegistration.length() == 0) {
+				System.out.println("Publisher file exists and is empty!");
+			} else {
+				try {
+					FileInputStream istream = new FileInputStream(publishersRegistration);
+					ObjectInputStream ois = new ObjectInputStream(istream);
+					
+					while(true) {
+						try {
+							@SuppressWarnings("unchecked")
+							ArrayList<PublisherClient> readObject = ((ArrayList<PublisherClient>) ois.readObject());
+							listOfPublishers = readObject;
+							
+						} catch (EOFException e) {
+							System.out.println("End of publishers registration file reached!");
+							break;
+						} catch (IOException | ClassNotFoundException e) {
+							System.out.println("Error reading publishers registration file!");
+							e.printStackTrace();
+							break;
+						}
+					}
+					istream.close();
+					ois.close();
+				} catch(IOException e) {
+					System.out.println("Error reading publishers registration file!");
+					e.printStackTrace();
+				}
+			}
+		}
+		
 	}
 	// Implementar método para instanciar client e para identificar qual o cliente
 	
@@ -110,7 +168,6 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 	public void subscribe(String name, ClientInterface client) throws RemoteException {
 		System.out.println("Subscribing " + name);
 		this.clientName = name;
-		this.client = client;
 	}
 	
 	private void writeInTopicFile(File file, ArrayList<Topic> array) {
@@ -127,6 +184,19 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 	}
 	
 	private void writeInNewsFile(File file, ArrayList<News> array) {
+		try {
+			FileOutputStream ostream = new FileOutputStream(file);
+			ObjectOutputStream oos = new ObjectOutputStream(ostream);
+			oos.writeObject(array);
+			oos.flush();
+			oos.close();
+			
+		} catch (IOException e) {
+			System.out.println("Error writing in news file!");
+		}
+	}
+	
+	private void writeInRegistrationFile(File file, ArrayList<PublisherClient> array) {
 		try {
 			FileOutputStream ostream = new FileOutputStream(file);
 			ObjectOutputStream oos = new ObjectOutputStream(ostream);
@@ -180,7 +250,7 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 				boolean clientSubscribed = listOfTopics.get(i).checkSubscription(clientName);
 				if(clientSubscribed) {
 					String msg = "Foi adicionada ao tópico " + listOfTopics.get(i).getTopicName() + " uma nova notícia: " + String.valueOf(pieceOfNews);
-					client.printOnClient(msg);
+					//client.printOnClient(msg);
 				}
 				
 				if(reachedLimitOfNews(i)) {
@@ -327,4 +397,27 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 		
 		return response;
 	}
+
+	@Override
+	public void publisherRegistration(String name, int id, String password) throws RemoteException {
+		PublisherClient newPublisher = new PublisherClient(name, id, password);
+		
+		if(!publisherVerification(id, password)) {
+			listOfPublishers.add(newPublisher);
+			writeInRegistrationFile(publishersRegistration, listOfPublishers);
+			System.out.println("Successful registration");
+		}
+		else
+			System.out.println("You are already registered");
+	}
+	//
+	
+	@Override
+	public boolean publisherVerification(int id, String password) throws RemoteException{
+        for (int i = 0; i < listOfPublishers.size(); i++) {
+            if(listOfPublishers.get(i).getId() == id && listOfPublishers.get(i).getPassword().equals(password))
+                return true;
+        }
+        return false;
+    }
 }
