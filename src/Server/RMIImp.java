@@ -5,7 +5,6 @@ import java.net.*;
 import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
-import Client.ClientInterface;
 import java.text.*;
 
 public class RMIImp extends UnicastRemoteObject implements RMIInterface{
@@ -16,8 +15,6 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 	private ArrayList<News> listOfNews;
 	private File topicsFile;
 	private File newsFile;
-	private ClientInterface client;
-	private String clientName;
 	
 	protected RMIImp() throws RemoteException {
 		super();
@@ -27,9 +24,10 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 		newsFile = new File ("newsFile.dat");
 		topicsFile = new File ("topicsFile.dat");
 		
+		
 		if(!newsFile.exists()) {
 			try {
-				boolean result = newsFile.createNewFile();
+				boolean result = newsFile.createNewFile(); 
 				
 				if (result) System.out.println("News file created!");
 				
@@ -58,7 +56,7 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 					}
 				}
 				istream.close();
-				ois.close();
+				ois.close(); 
 				
 			} catch(IOException e) {
 				System.out.println("Error reading topic file!");
@@ -103,14 +101,13 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 				e.printStackTrace();
 			}
 		}
-	}
-	// Implementar método para instanciar client e para identificar qual o cliente
-	
-	@Override
-	public void subscribe(String name, ClientInterface client) throws RemoteException {
-		System.out.println("Subscribing " + name);
-		this.clientName = name;
-		this.client = client;
+		
+		
+		
+		
+		
+		
+		
 	}
 	
 	private void writeInTopicFile(File file, ArrayList<Topic> array) {
@@ -145,23 +142,55 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 		listOfTopics.add(newTopic);
 		
 		writeInTopicFile(topicsFile, listOfTopics);
+		
+		/*try {
+			FileOutputStream ostream = new FileOutputStream(topicsFile);
+			ObjectOutputStream oos = new ObjectOutputStream(ostream);
+			oos.writeObject(listOfTopics);
+			oos.flush();
+			oos.close();
+			
+		} catch (IOException e) {
+			System.out.println("Error writing in topics file!");
+		}*/
 	}
 	
 	@Override
 	public String consultTopics() throws RemoteException {
 		String response = "";
 		for (int i = 0; i < listOfTopics.size(); i++) {
-			response += listOfTopics.get(i).getTopicName() + " nº de notícias: " + listOfTopics.get(i).getNewsCount() + "\n";
+			response += listOfTopics.get(i).getTopicName() + "\n";
 		}
 		return response;
 	}
 	
 	@Override
-	public void subscribeToTopic(String topicName, String subscriber) throws RemoteException {
-		for (int i = 0; i < listOfTopics.size(); i++) {
-			if(listOfTopics.get(i).getTopicName().equals(topicName)) {
-				listOfTopics.get(i).setSubscribers(subscriber);
+	public void subscribeTopic(String targetTopicName, String newName) throws RemoteException {
+		for (int i = 0; i < listOfTopics.size(); i++) { 
+			if(listOfTopics.get(i).getTopicName().equals(targetTopicName)) {
+				listOfTopics.get(i).setTopicName(newName);
+				break;
 			}
+		}
+		
+		try {
+			boolean deleted = topicsFile.delete();
+			
+			if(deleted) {
+				System.out.println("Topic file deleted successfully!");
+				topicsFile = new File ("topicsFile.dat");
+				
+				writeInTopicFile(topicsFile, listOfTopics);
+				/*FileOutputStream ostream = new FileOutputStream(topicsFile);
+				ObjectOutputStream oos = new ObjectOutputStream(ostream);
+				oos.writeObject(listOfTopics);
+				oos.flush();
+				oos.close();*/
+				
+			} else System.out.println("Topic file not deleted!");
+			
+		} catch (SecurityException e) {
+			System.out.println("Error deleting the topic file!");
 		}
 	}
 	
@@ -176,27 +205,26 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 			if(listOfTopics.get(i).getTopicName().equals(topicName)) {
 				topicFound = true;
 				
-				// Communicate with client
-				boolean clientSubscribed = listOfTopics.get(i).checkSubscription(clientName);
-				if(clientSubscribed) {
-					String msg = "Foi adicionada ao tópico " + listOfTopics.get(i).getTopicName() + " uma nova notícia: " + String.valueOf(pieceOfNews);
-					client.printOnClient(msg);
-				}
-				
 				if(reachedLimitOfNews(i)) {
 					cleanTopic(i, topicName);
 				}
 				
 				listOfTopics.get(i).setLatestPieceOfNews(newPieceOfNews);
 				listOfTopics.get(i).incrementNewsCount();
+				
 				writeInTopicFile(topicsFile, listOfTopics);
-				
-				listOfNews.add(newPieceOfNews);
-				writeInNewsFile(newsFile, listOfNews);
-				
 				
 				break;
 			}
+		}
+		
+		if(topicFound) {
+			listOfNews.add(newPieceOfNews);
+			
+			writeInNewsFile(newsFile, listOfNews);
+			
+		} else { 
+			//Escrever ao cliente que tï¿½pico nï¿½o foi encontrado (callback?)
 		}
 	}
 	
@@ -226,42 +254,51 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 	
 	private void cleanTopic(int i, String topicName) {
 		int count = listOfTopics.get(i).getNewsCount() / 2;
-		
-		int iterator = 0;
+		int iterator = 1;
 		ArrayList<News> toBackup = new ArrayList<News>();
 		
 		for (int j = 0; j < listOfNews.size(); j++) {
 			if(listOfNews.get(j).getTopicName().equals(topicName) && (iterator <= count)) {
+				toBackup.add(listOfNews.get(j));
+				listOfNews.remove(j);
 				iterator++;
-				toBackup.add(listOfNews.remove(j));
 				
 				if(iterator > count) break;
 			}
 		}
-		//copyToBackup(toBackup);
-		int newNewsCount = listOfTopics.get(i).getNewsCount() - iterator;
-		listOfTopics.get(i).setNewsCount(newNewsCount);
+		copyToBackup(toBackup);
+		listOfTopics.get(i).setNewsCount(count);
 	}
 	
-	/*private void copyToBackup (ArrayList<News> backupNews) {
+	
+	
+	
+	
+	//RMI Ã© o "cliente" 
+	private void copyToBackup (ArrayList<News> backupNews) {
 		Socket s;
 		
 		try {
-			s = new Socket("", 0); // Inserir o IP e porto
+			s = new Socket("127.0.0.1", 5432); // Inserir o IP e porto
 			
 			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
+			ObjectInputStream ois = new ObjectInputStream(s.getInputStream()); //para testar, remover depois
 			
-			oos.writeObject(backupNews);
+			System.out.println(ois.readObject()+"\n");
+			oos.writeObject("thIsActsLiKeaPsWD777122");
+			oos.writeObject(backupNews); 
+			System.out.println(ois.readObject()+"\n");
 			oos.flush();
 			oos.close();
 			
-		} catch(IOException e) {
+		} catch(IOException | ClassNotFoundException e) { //remover exceÃ§Ã£o de teste
 			System.out.println("Error starting socket connection with backup server!");
 			e.printStackTrace();
 		}
-	}*/
+	}
 
-	
+
+	/*
 	@Override
 	public String consultAllNews() throws RemoteException {
 		String response = "";
@@ -270,15 +307,15 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 		for (int i = 0; i < listOfNews.size(); i++) {
 			String strDate = dateFormat.format(listOfNews.get(i).getTimestamp());
 			
-			response += "Tópico: " + listOfNews.get(i).getTopicName() + " | " 
+			response += "Tï¿½pico: " + listOfNews.get(i).getTopicName() + " | " 
 					+  "Produtor: " + listOfNews.get(i).getPublisher() + " | "
-					+ "Data da publicação: " + strDate + " | "
-					+ "Notícia: " + String.valueOf(listOfNews.get(i).getPieceOfNews()) + "\n";
+					+ "Data da publicaï¿½ï¿½o: " + strDate + " | "
+					+ "Notï¿½cia: " + String.valueOf(listOfNews.get(i).getPieceOfNews()) + "\n";
 		}
 		
 		return response;
 	}
-
+*/
 	@Override
 	public String consultNewsInDateRange(String topicName, Date date1, Date date2) throws RemoteException {
 		String response = "";
@@ -291,17 +328,18 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 				int lte = objDate.compareTo(date2);
 				System.out.println("Date of the news: " + objDate + " | date1: " + date1 + " | date2: " + date2);
 				System.out.println("gte: " + gte + " | " + "lte: " + lte);
+				if (lte == 0 || lte < 0) {
+					response += String.valueOf(listOfNews.get(i).getPieceOfNews()) + "\n";
+				}
 				
 				if(gte == 0 || gte > 0) {
-					if(lte == 0 || lte < 0) {
-						response += String.valueOf(listOfNews.get(i).getPieceOfNews()) + "\n";
-					}
+					response += String.valueOf(listOfNews.get(i).getPieceOfNews()) + "\n";
 				}
 			}
 		}
 		
 		if(response.equals("")) {
-			response = "Notícias entre as datas especificadas não encontradas! Acesse o servidor backup para buscá-las pelo IP + porto";
+			response = "Notï¿½cias entre as datas especificadas nï¿½o encontradas! Servidor de arquivo @ IP: 127.0.0.1, Porta: 5432";
 		}
 		
 		return response;
@@ -322,9 +360,10 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 			}
 		} catch (NullPointerException e) {
 			System.out.println(e.getMessage());
-			response = "Nenhuma notícia vinculada ao tópico: " + topicName + "\n";
+			response = "Nenhuma noticia vinculada ao topico: " + topicName + "\n";
 		}
 		
 		return response;
 	}
+
 }
