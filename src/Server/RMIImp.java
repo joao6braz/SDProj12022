@@ -1,6 +1,7 @@
 package Server;
 
 import java.io.*;
+import java.net.*;
 import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
@@ -263,8 +264,6 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 				
 				listOfNews.add(newPieceOfNews);
 				writeInNewsFile(newsFile, listOfNews);
-				
-				
 				break;
 			}
 		}
@@ -308,28 +307,32 @@ public class RMIImp extends UnicastRemoteObject implements RMIInterface{
 				if(iterator > count) break;
 			}
 		}
-		//copyToBackup(toBackup);
+		copyToBackup(toBackup);
 		int newNewsCount = listOfTopics.get(i).getNewsCount() - iterator;
 		listOfTopics.get(i).setNewsCount(newNewsCount);
 	}
 	
-	/*private void copyToBackup (ArrayList<News> backupNews) {
+	private void copyToBackup (ArrayList<News> backupNews) {
 		Socket s;
-		
+		 
 		try {
-			s = new Socket("", 0); // Inserir o IP e porto
+			s = new Socket("127.0.0.1", 5432); // Inserir o IP e porto
 			
 			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
+			ObjectInputStream ois = new ObjectInputStream(s.getInputStream()); //para testar, remover depois
 			
-			oos.writeObject(backupNews);
+			System.out.println(ois.readObject()+"\n");
+			oos.writeObject("-1");
+			oos.writeObject(backupNews); 
+			System.out.println(ois.readObject()+"\n");
 			oos.flush();
 			oos.close();
 			
-		} catch(IOException e) {
+		} catch(IOException | ClassNotFoundException e) { //remover exceção de teste
 			System.out.println("Error starting socket connection with backup server!");
 			e.printStackTrace();
 		}
-	}*/
+	}
 
 	
 	@Override
