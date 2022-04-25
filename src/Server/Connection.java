@@ -4,6 +4,8 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import Client.PublisherClient;
+
 
 public class Connection extends Thread {
 	private Socket socket;
@@ -19,7 +21,9 @@ public class Connection extends Thread {
 		this.backupFile = file;
 		start();
 	}
-
+	
+	
+	
 	public synchronized void saveOnFile(File file) {
 		try {
 			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file));
@@ -49,33 +53,42 @@ public class Connection extends Thread {
 		String str = "";
 		int i = 0;
 		
-		for (News n : listOfNewsBackUp) {
+		for (i = 0; i<listOfNewsBackUp.size(); i++) {
 		    	
-		    String string = String.valueOf(new String(n.getPieceOfNews()));
-			str += i+"-: "+ string + "\n";
+		    	
+			String s = new String(listOfNewsBackUp.get(i).getPieceOfNews());
+			str += i+"-: "+ s + "\n";
 			i++;
 		}
 		 
 		return str;
 	}
 	
+	
+	
+	
+	@SuppressWarnings("unchecked")
 	public void readFromFile(File file) {
 		ArrayList<News> holder = new ArrayList<News>();
-		News news;
 		
-		try {
-			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
-			for (int i = 0; i < listOfNewsBackUp.size(); i++) { //size of bckfile is always the same as listofNewsbckp
-				news = (News) ois.readObject();
-				holder.add(news);
+		if(file.length() == 0) 
+			System.out.println("Publisher file exists and is empty!");
+		else {
+				
+			try {
+
+				 FileInputStream istream = new FileInputStream(file);
+				 ObjectInputStream ois = new ObjectInputStream(istream);
+				 
+				 holder = (ArrayList<News>) ois.readObject();
+				 listOfNewsBackUp = holder;
+				 
+			} catch (IOException | ClassNotFoundException e) {
+			    // TODO Auto-generated catch block
+			    e.printStackTrace();
 			}
-			listOfNewsBackUp = holder;
-			ois.close();
-			
-		} catch (IOException e) {
-			e.getMessage();
-		} catch (ClassNotFoundException e) {
-			e.getMessage();
+			   
+		
 		}
 	}
 	

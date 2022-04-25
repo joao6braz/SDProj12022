@@ -172,8 +172,8 @@ public class SubscriberClient extends java.rmi.server.UnicastRemoteObject implem
 		    RMIInterface serverObj = (RMIInterface) Naming.lookup("RMIImp");
 	
 		    do {
-			System.out.println("Select an option below: \n" + "1. I am an unregistered subscriber \n"
-				+ "2. I am a registered subscriber \n" + "3. Log out");
+		    	System.out.println("Select an option below: \n" + "1. I am an unregistered subscriber \n"
+		    			+ "2. I am a registered subscriber \n" + "3. I want to log as a guest\n" + "4. Log out");
 			option = Integer.parseInt(input.nextLine()); // Tratar dos casos em que o input n�o seja um inteiro
 	
 			switch (option) {
@@ -200,14 +200,18 @@ public class SubscriberClient extends java.rmi.server.UnicastRemoteObject implem
 			    verification = serverObj.subscriberVerification(str1, id, str2);
 			    menuSubscriber(subscriber, serverObj, verification);
 	
-			case 3:
+			case 3: 
+				SubscriberClient guest = new SubscriberClient("guest", 0 , "guest");
+			    menuSubscriber(guest, serverObj, true);
+			    
+			case 4:
 			    System.out.println("Leaving...");
 			    System.exit(0);
 	
 			default:
 			    System.out.println("Select a valid option");
 			}
-		    } while (option != 3);
+		    } while (option != 4);
 		} catch (Exception e) {
 		    System.out.println("Exception occured: " + e);
 		    System.exit(0);
