@@ -34,9 +34,4 @@ public class News  implements Serializable{
 	public Date getTimestamp() {
 		return timestamp;
 	}
-
-	@Override
-	public String toString() {
-		return "Notícias [Última notícia=" + Arrays.toString(pieceOfNews) + "]";
-	}
 }

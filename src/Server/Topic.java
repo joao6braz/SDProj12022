@@ -3,27 +3,24 @@ package Server;
 import java.io.*;
 import java.util.*;
 
+import Client.SubscriberClient;
+
 public class Topic implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 	private String topicName;
 	private News latestPieceOfNews;
 	private int newsCount;
-	private ArrayList<String> subscribers;
+	private ArrayList<SubscriberClient> subscribers;
 	
 	public Topic(String topicName) {
 		this.topicName = topicName;
 		this.newsCount = 0;
-		this.subscribers = new ArrayList<String>();
+		this.subscribers = new ArrayList<SubscriberClient>();
 	}
 
-	public boolean checkSubscription(String consumerName) {
-		boolean result = subscribers.contains(consumerName);
-		return result;
-	}
-
-	public void setSubscribers(String subscriber) {
-		this.subscribers.add(subscriber);
+	public void setSubscribers(SubscriberClient targetSubcriber) {
+		this.subscribers.add(targetSubcriber);
 	}
 
 	public void setTopicName(String newTopicName) {
@@ -50,6 +47,10 @@ public class Topic implements Serializable{
 		return newsCount;
 	}
 	
+	public ArrayList<SubscriberClient> getSubscribers() {
+		return subscribers;
+	}
+
 	public void incrementNewsCount() {
 		this.newsCount++;
 	}

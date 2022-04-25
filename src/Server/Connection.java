@@ -11,7 +11,7 @@ public class Connection extends Thread {
 	private int connections_made;
 	private File backupFile;
 	
-	public Connection(Socket s, ArrayList<News> listOfNewsBackUp, int connections_mada, File file) {
+	public Connection(Socket s, ArrayList<News> listOfNewsBackUp, int connections_made, File file) {
 		super();
 		socket = s;
 		this.listOfNewsBackUp = listOfNewsBackUp;
@@ -19,47 +19,7 @@ public class Connection extends Thread {
 		this.backupFile = file;
 		start();
 	}
-/*	
 
-	
-	public synchronized void gravarFicheiro(File file) {
-		try {
-			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file));
-			oos.writeObject(this.alunosRegistados);
-			oos.close();
-			
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	public void lerFicheiro(File file) {
-		Aluno obj;
-		
-		try {
-			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
-			for (int i = 0; i < alunosRegistados.size(); i++) {
-				obj = (Aluno) ois.readObject();
-				System.out.println(obj.toString());
-			}
-			ois.close();
-			
-		} catch (IOException e) {
-			e.getMessage();
-		} catch (ClassNotFoundException e) {
-			e.getMessage();
-		}
-		
-	}
-	
-	*/
-	
-	
-	
 	public synchronized void saveOnFile(File file) {
 		try {
 			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file));
@@ -91,16 +51,13 @@ public class Connection extends Thread {
 		
 		for (News n : listOfNewsBackUp) {
 		    	
-		    	String string = new String(n.getPieceOfNews());
+		    String string = String.valueOf(new String(n.getPieceOfNews()));
 			str += i+"-: "+ string + "\n";
 			i++;
 		}
 		 
 		return str;
 	}
-	
-	
-	
 	
 	public void readFromFile(File file) {
 		ArrayList<News> holder = new ArrayList<News>();
@@ -120,7 +77,6 @@ public class Connection extends Thread {
 		} catch (ClassNotFoundException e) {
 			e.getMessage();
 		}
-		
 	}
 	
 	
@@ -129,33 +85,36 @@ public class Connection extends Thread {
 	public void run() {
 		try {
 			
-		
 			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 			ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 			
-			String msgDefault = ("<Servidor> Escolha uma das opções abaixo:"
-					+ "\n1 - Consultar uma noticia"
-					+ "\n2 - Consultar o número de acessos"
-					+ "\n0 - Para encerrar");
+			String msgDefault = ("<Server> Menu:"
+					+ "\n1 - Get all news"
+					+ "\n2 - Check how many connections have been established"
+					+ "\n0 - Return");
 			 
-			oos.writeObject("Esta a funcionar!");
 			
-			String str = (String) ois.readObject(); 
-			 
-			while (!str.equals("0")) {
+			String str = ""; 
+			
+			while (!str.equals("0"))
+			{
+			    oos.writeObject(msgDefault);//first write
 			    
-			    	if(str.equals("-1")) //-1 means its our "client" RMIImpl that wants to communicate
-			    	{
+			    str = (String) ois.readObject();  //first read 
 			    
-			    	    ArrayList<News> holder = (ArrayList<News>)ois.readObject();
-			    	    listOfNewsBackUp.addAll(holder);	//joins list of backup with new list "holder"
-			    	    
-			    	    if (backupFile.exists()) 
-			    		saveOnFile(backupFile);
-			    	    else
-			    		// we dont know for sure file was created on server class
-			    		System.out.println("Error creating file on server class!"); 
-			    	    
+			    
+			    if(str.equals("-1")) //-1 means its our "client" RMIImpl that wants to communicate
+			    {
+			    
+				ArrayList<News> holder = (ArrayList<News>)ois.readObject(); //second read
+			        listOfNewsBackUp.addAll(holder);	//joins list of backup with new list "holder"
+			   	    
+			        if (backupFile.exists()) 
+			            saveOnFile(backupFile);
+			    	else
+			    	    // we dont know for sure file was created on server class
+			    	    System.out.println("Error creating file on server class!"); 
+			    	   
 			    	    //oos.writeObject(getAllNews());
 			    	
 			    	}
@@ -171,8 +130,7 @@ public class Connection extends Thread {
 			    	    oos.writeObject(getNmbrAcess()); 
 			    	   	
 			}
-			
-			   
+ 
 			oos.close();
 			ois.close();
 		} catch(IOException e) {

@@ -38,10 +38,9 @@ public class BackupServer {
 
 		}
 		
-		
 		try {
 			serverSocket = new ServerSocket(5432);
-			System.out.println("Servidor est√° a escutar!");
+			System.out.println("Servidor est· a escutar!");
 			
 			while (true) {
 				socket = serverSocket.accept();
@@ -56,8 +55,6 @@ public class BackupServer {
 			
 	
 	}
-	
-	
 	
 	public static void main(String[] args) {
 		BackupServer s = new BackupServer();

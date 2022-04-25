@@ -65,13 +65,11 @@ public class PublisherClient extends java.rmi.server.UnicastRemoteObject impleme
 					str1 = input.nextLine();
 					serverObj.addNewTopic(str1);
 					break;
-					// Receber confirmação
 
 				case 2:
 					System.out.println("Existing Topics: \n");
 					System.out.println(serverObj.consultTopics());
 					break;
-					// Receber confirmação
 
 				case 3:
 					System.out.println("Write the topic name: ");
@@ -88,15 +86,13 @@ public class PublisherClient extends java.rmi.server.UnicastRemoteObject impleme
 						news[i] = str2.charAt(i);
 					}
 					
-					serverObj.addPieceOfNews(str1, news, publisher.getName());
+					System.out.println(serverObj.addPieceOfNews(str1, news, publisher.getName()));
 					break;
-					// Receber confirmação
 
 				case 4:
 					System.out.println("All published news: \n");
 					System.out.println(serverObj.consultAllNews());
 					break;
-					// Receber confirmação
 
 				case 5:
 					System.out.println("Leaving...");
@@ -139,7 +135,6 @@ public class PublisherClient extends java.rmi.server.UnicastRemoteObject impleme
 					System.out.print("Write your password: ");
 					str2 = input.nextLine();
 					publisher = new PublisherClient(str1, id, str2);
-					
 					serverObj.publisherRegistration(str1, id, str2);
 					menuPublisher(publisher, serverObj, true);
 					
@@ -168,6 +163,5 @@ public class PublisherClient extends java.rmi.server.UnicastRemoteObject impleme
 			System.out.println("Exception occured: " + e);
 			System.exit(0);
 		}
-
 	}
 }
